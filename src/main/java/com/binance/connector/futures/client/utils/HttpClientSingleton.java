@@ -2,8 +2,10 @@ package com.binance.connector.futures.client.utils;
 
 import okhttp3.OkHttpClient;
 import java.net.Proxy;
+import java.time.Duration;
 
 public final class HttpClientSingleton {
+    private static final Duration PING_INTERVAL = Duration.ofSeconds(30);
     private static OkHttpClient httpClient = null;
 
     private HttpClientSingleton() {
@@ -30,9 +32,15 @@ public final class HttpClientSingleton {
             httpClient = new OkHttpClient();
         } else {
             if (proxy.getAuth() == null) {
-                httpClient = new OkHttpClient.Builder().proxy(proxy.getProxy()).build();
+                httpClient = new OkHttpClient.Builder()
+                        .pingInterval(PING_INTERVAL)
+                        .proxy(proxy.getProxy())
+                        .build();
             } else {
-                httpClient = new OkHttpClient.Builder().proxy(proxy.getProxy()).proxyAuthenticator(proxy.getAuth()).build();
+                httpClient = new OkHttpClient.Builder()
+                        .proxy(proxy.getProxy())
+                        .proxyAuthenticator(proxy.getAuth())
+                        .build();
             }
         }
     }

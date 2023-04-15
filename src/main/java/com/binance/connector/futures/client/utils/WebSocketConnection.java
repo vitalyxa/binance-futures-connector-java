@@ -10,22 +10,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class WebSocketConnection extends WebSocketListener {
+    protected static final Logger logger = LoggerFactory.getLogger(WebSocketConnection.class);
     private static final AtomicInteger connectionCounter = new AtomicInteger(0);
     private static final int NORMAL_CLOSURE_STATUS = 1000;
     private static final OkHttpClient client = HttpClientSingleton.getHttpClient();
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketConnection.class);
 
     private final WebSocketCallback onOpenCallback;
     private final WebSocketCallback onMessageCallback;
     private final WebSocketCallback onClosingCallback;
     private final WebSocketCallback onFailureCallback;
-    private final int connectionId;
     private final Request request;
     private final String streamName;
 
-    private WebSocket webSocket;
-
-    private final Object mutex;
+    protected final int connectionId;
+    protected WebSocket webSocket = null;
+    protected final Object mutex = new Object();
 
     public WebSocketConnection(
             WebSocketCallback onOpenCallback,
@@ -41,8 +40,6 @@ public class WebSocketConnection extends WebSocketListener {
         this.connectionId = WebSocketConnection.connectionCounter.incrementAndGet();
         this.request = request;
         this.streamName = request.url().host() + request.url().encodedPath();
-        this.webSocket = null;
-        this.mutex = new Object();
     }
 
     public void connect() {

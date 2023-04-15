@@ -1,12 +1,8 @@
 package com.binance.connector.futures.client.impl;
 
 import com.binance.connector.futures.client.WebsocketClient;
-import com.binance.connector.futures.client.utils.HttpClientSingleton;
-import com.binance.connector.futures.client.utils.RequestBuilder;
-import com.binance.connector.futures.client.utils.UrlBuilder;
-import com.binance.connector.futures.client.utils.WebSocketCallback;
-import com.binance.connector.futures.client.utils.WebSocketConnection;
-import com.binance.connector.futures.client.utils.ParameterChecker;
+import com.binance.connector.futures.client.utils.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,8 +25,7 @@ import org.slf4j.LoggerFactory;
 public abstract class WebsocketClientImpl implements WebsocketClient {
     private final String baseUrl;
     private final Map<Integer, WebSocketConnection> connections = new HashMap<>();
-    private final WebSocketCallback noopCallback = msg -> {
-    };
+    private final WebSocketCallback noopCallback = msg -> {};
     private static final Logger logger = LoggerFactory.getLogger(WebsocketClientImpl.class);
 
     public WebsocketClientImpl(String baseUrl) {
@@ -117,7 +112,7 @@ public abstract class WebsocketClientImpl implements WebsocketClient {
      */
     @Override
     public int markPriceStream(String symbol, int speed, WebSocketCallback onOpenCallback, WebSocketCallback onMessageCallback, WebSocketCallback onClosingCallback, WebSocketCallback onFailureCallback) {
-        Request request = null;
+        Request request;
         final int defaultSpeed = 3;
         if (speed == defaultSpeed) {
             request = RequestBuilder.buildWebsocketRequest(String.format("%s/ws/%s@markPrice", baseUrl, symbol.toLowerCase()));
@@ -547,7 +542,7 @@ public abstract class WebsocketClientImpl implements WebsocketClient {
     public int partialDepthStream(String symbol, int levels, int speed, WebSocketCallback onOpenCallback, WebSocketCallback onMessageCallback, WebSocketCallback onClosingCallback, WebSocketCallback onFailureCallback) {
         ParameterChecker.checkParameterType(symbol, String.class, "symbol");
 
-        Request request = null;
+        Request request;
         final int defaultSpeed = 250;
         if (speed == defaultSpeed) {
             request = RequestBuilder.buildWebsocketRequest(String.format("%s/ws/%s@depth%s", baseUrl, symbol.toLowerCase(), levels));
@@ -595,7 +590,7 @@ public abstract class WebsocketClientImpl implements WebsocketClient {
     public int diffDepthStream(String symbol, int speed, WebSocketCallback onOpenCallback, WebSocketCallback onMessageCallback, WebSocketCallback onClosingCallback, WebSocketCallback onFailureCallback) {
         ParameterChecker.checkParameterType(symbol, String.class, "symbol");
 
-        Request request = null;
+        Request request;
         final int defaultSpeed = 250;
         if (speed == defaultSpeed) {
             request = RequestBuilder.buildWebsocketRequest(String.format("%s/ws/%s@depth", baseUrl, symbol.toLowerCase(), speed));
@@ -715,7 +710,13 @@ public abstract class WebsocketClientImpl implements WebsocketClient {
             WebSocketCallback onFailureCallback,
             Request request
     ) {
-        WebSocketConnection connection = new WebSocketConnection(onOpenCallback, onMessageCallback, onClosingCallback, onFailureCallback, request);
+        WebSocketConnection connection = new WebSocketConnectionWithReconnect(
+                onOpenCallback,
+                onMessageCallback,
+                onClosingCallback,
+                onFailureCallback,
+                request
+        );
         connection.connect();
         int connectionId = connection.getConnectionId();
         connections.put(connectionId, connection);
